@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="card">
+<h2>Turn10 Login</h2>
+
+<input id="name" placeholder="Name">
+<input id="email" placeholder="Email">
+<input id="pass" type="password" placeholder="Passwort">
+
+<select id="role">
+  <option value="turner">Turner</option>
+  <option value="trainer">Trainer</option>
+</select>
+
+<input id="code" placeholder="Trainer Code">
+
+<button onclick="register()">Registrieren</button>
+
+<hr>
+
+<input id="loginEmail" placeholder="Email">
+<input id="loginPass" type="password" placeholder="Passwort">
+
+<button onclick="login()">Login</button>
+</div>
+
+<script type="module">
+import { auth, db } from "./app.js";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+window.register = async () => {
+  const name = name.value;
+  const email = email.value;
+  const pass = pass.value;
+  const role = role.value;
+  const code = code.value;
+
+  if(role === "trainer" && code !== "1234"){
+    alert("Falscher Code");
+    return;
+  }
+
+  const cred = await createUserWithEmailAndPassword(auth, email, pass);
+
+  await setDoc(doc(db, "users", cred.user.uid), {
+    name,
+    email,
+    role,
+    lastOnline: serverTimestamp()
+  });
+
+  window.location.href = "app.html";
+};
+
+window.login = async () => {
+  await signInWithEmailAndPassword(auth, loginEmail.value, loginPass.value);
+  window.location.href = "app.html";
+};
+</script>
+
+</body>
+</html>
