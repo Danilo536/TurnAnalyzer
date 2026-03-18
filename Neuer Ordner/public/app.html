@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+<div class="sidebar">
+  <h2>Turn10</h2>
+  <button onclick="show('dashboard')">Dashboard</button>
+  <button onclick="show('elements')">Elemente</button>
+  <button onclick="show('builder')">Builder</button>
+  <button onclick="show('video')">Video</button>
+</div>
+
+<div class="content" id="content"></div>
+
+</div>
+
+<script type="module">
+import { db, auth, storage } from "./app.js";
+import {
+  collection, onSnapshot, addDoc, doc, setDoc
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+import {
+  ref, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-storage.js";
+
+// Navigation
+window.show = (page) => {
+
+if(page === "dashboard"){
+  content.innerHTML = "<h2>Dashboard</h2><div id='polls'></div>";
+
+  onSnapshot(collection(db,"polls"), snap=>{
+    polls.innerHTML="";
+    snap.forEach(p=>{
+      const poll = p.data();
+      polls.innerHTML += `
+        <div class="card">
+          <h3>${poll.title}</h3>
+          <button onclick="vote('${p.id}','ja')">Ja</button>
+          <button onclick="vote('${p.id}','nein')">Nein</button>
+        </div>
+      `;
+    });
+  });
+}
+
+// ELEMENTE
+if(page === "elements"){
+  content.innerHTML = "<h2>Elemente</h2><div id='elements'></div>";
+
+  onSnapshot(collection(db,"elements"), snap=>{
+    elements.innerHTML="";
+    snap.forEach(doc=>{
+      const e = doc.data();
+      elements.innerHTML += `
+        <div class="card">
+          <h3>${e.name}</h3>
+          <p>${e.difficulty} | ${e.points} Punkte</p>
+        </div>
+      `;
+    });
+  });
+}
+
+// BUILDER
+if(page === "builder"){
+  content.innerHTML = `
+    <h2>Builder</h2>
+    <div id="plan"></div>
+    <button onclick="savePlan()">Speichern</button>
+  `;
+}
+
+// VIDEO
+if(page === "video"){
+  content.innerHTML = `
+    <h2>Video Upload</h2>
+    <input type="file" id="file">
+    <video id="video" controls></video>
+  `;
+
+  file.onchange = async (e)=>{
+    const f = e.target.files[0];
+    const storageRef = ref(storage, "videos/"+f.name);
+    await uploadBytes(storageRef, f);
+    video.src = await getDownloadURL(storageRef);
+  };
+}
+
+};
+
+// Abstimmen
+window.vote = async (id, choice)=>{
+  const note = prompt("Anmerkung / Grund");
+  await setDoc(doc(db,"polls",id,"votes",auth.currentUser.uid),{
+    choice,
+    note
+  });
+};
+
+// Start
+show("dashboard");
+
+</script>
+</body>
+</html>
